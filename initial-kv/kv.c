@@ -41,6 +41,7 @@ int putValue(char* key, int value, DictPair* position) {
     position = (DictPair* )malloc(sizeof(DictPair));
     position->value = value;
     position->key = key;
+    printf("Inside put value %s %d\n", position->key, position->value);
     return 0;
 }
 
