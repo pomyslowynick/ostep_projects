@@ -10,24 +10,23 @@ typedef struct DictPair {
     char* key;
 } DictPair;
 
-char* strsep(char** stringp, const char* delim)
+char* strsep(char* stringp, const char* delim)
 {
-  char* start = *stringp;
   char* p;
 
-  p = (start != NULL) ? strpbrk(start, delim) : NULL;
+  p = (stringp != NULL) ? strpbrk(stringp, delim) : NULL;
 
   if (p == NULL)
   {
-    *stringp = NULL;
+    stringp = NULL;
   }
   else
   {
     *p = '\0';
-    *stringp = p + 1;
+    // stringp = p + 1;
   }
-
-  return start;
+  printf("%s\n", stringp);
+  return stringp;
 }
 
 int getValue(char* key, DictPair* map) {
@@ -36,12 +35,12 @@ int getValue(char* key, DictPair* map) {
     return 0;
 }
 
-int putValue(char* key, int value, DictPair* position) {
+int putValue(char* key, int value, DictPair** position) {
     printf("%s\n", key);
-    position = (DictPair* )malloc(sizeof(DictPair));
-    position->value = value;
-    position->key = key;
-    printf("Inside put value %s %d\n", position->key, position->value);
+    *position = (DictPair* )malloc(sizeof(DictPair));
+    (*position)->value = value;
+    (*position)->key = key;
+    printf("Inside put value %s %d\n", (*position)->key, (*position)->value);
     return 0;
 }
 
@@ -56,7 +55,7 @@ int main(int argc, char *argv[]) {
     DictPair* nextPosition = map;
 
     for (int i = 1; i < argc; i++) {
-        char *token = strsep(&argv[i], ",");
+        char *token = strsep(argv[i], ",");
         printf("%c\n", *token);
         switch (*token)
         {
@@ -64,7 +63,7 @@ int main(int argc, char *argv[]) {
             getValue(argv[i], map);
             break;
         case 'p':
-            putValue(argv[i], argv[i][2], nextPosition);
+            putValue(argv[i], argv[i][2], &nextPosition);
             printf("%s %d\n", nextPosition->key, nextPosition->value);
             nextPosition += sizeof(DictPair);
             break;
