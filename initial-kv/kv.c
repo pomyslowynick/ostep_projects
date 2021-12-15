@@ -4,73 +4,93 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
-typedef struct DictPair {
-    int value;
-    char* key;
+typedef struct DictPair
+{
+  char *value;
 } DictPair;
 
-char* strsep(char* stringp, const char* delim)
+// unsigned long hash(unsigned char *str) {
+//   unsigned long hash = 5381;
+//   int c;
+
+//   while (c = *str++)
+//       hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+//   return hash;
+// }
+
+char *strsep(char *stringp, const char *delim, int delimNum)
 {
-  char* p;
+  assert(delimNum > 0);
+  int offset = 0;
+  char *delimiterPointer = (stringp != NULL) ? strpbrk(stringp, delim) : NULL;
 
-  p = (stringp != NULL) ? strpbrk(stringp, delim) : NULL;
-
-  if (p == NULL)
+  if (delimiterPointer == NULL)
   {
-    stringp = NULL;
+    return NULL;
   }
-  else
+
+  for (int i = 1; i != delimNum; i++)
   {
-    *p = '\0';
-    // stringp = p + 1;
+    offset = delimiterPointer - stringp + 1;
+    delimiterPointer = strpbrk(delimiterPointer + 1, delim);
   }
-  printf("%s\n", stringp);
-  return stringp;
+  if (delimiterPointer == NULL)
+  {
+    delimiterPointer = stringp + strlen(stringp);
+  }
+
+  char *result = (char *)malloc(delimiterPointer - stringp - offset);
+  strncpy(result, stringp + offset, delimiterPointer - stringp - offset);
+  result[delimiterPointer - stringp - offset] = '\0';
+  printf("The returned command: %s\n", result);
+  return result;
 }
 
-int getValue(char* key, DictPair* map) {
-    printf("%s\n", key);
+int getValue(char* key, char* map)
+{
+  printf("%s\n", key);
 
-    return 0;
+  return 0;
 }
 
-int putValue(char* key, int value, DictPair** position) {
-    printf("%s\n", key);
-    *position = (DictPair* )malloc(sizeof(DictPair));
-    (*position)->value = value;
-    (*position)->key = key;
-    printf("Inside put value %s %d\n", (*position)->key, (*position)->value);
-    return 0;
+int putValue(int key, char* value, char map[])
+{
+  map[key] = (char *)malloc(sizeof value);
+  // strncpy(map[key], value, sizeof(value));
+  // printf("Inside put value %d %s\n", key, map[key]);
+  return 0;
 }
 
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        printf("Possible options are:\
-                        \n\t 'g arg' - get value for key arg\
-                        \n\t 'p key:value' - put key value pair into database \n");
+int main(int argc, char *argv[])
+{
+  if (argc < 2)
+  {
+    printf("Possible options are:\
+                      \n\t 'g arg' - get value for key arg\
+                      \n\t 'p key:value' - put key value pair into database \n");
+  }
+
+  char* map[65536];
+
+  for (int i = 1; i < argc; i++)
+  {
+    char *command = strsep(argv[i], ",", 1);
+    switch (*command)
+    {
+    case 'g':
+      getValue(strsep(argv[i], ",", 2), map);
+      break;
+    case 'p':
+      putValue(atoi(strsep(argv[i], ",", 2)), strsep(argv[i], ",", 3), &map);
+      // printf("The created struct: %d %s\n", (&map)[atoi(strsep(argv[i], ",", 2))]->key, (&map)[atoi(strsep(argv[i], ",", 2))]->value);
+      break;
+
+    default:
+      printf("Unrecognized command has been issued.");
+      break;
     }
-
-    DictPair map[1000]; 
-    DictPair* nextPosition = map;
-
-    for (int i = 1; i < argc; i++) {
-        char *token = strsep(argv[i], ",");
-        printf("%c\n", *token);
-        switch (*token)
-        {
-        case 'g':
-            getValue(argv[i], map);
-            break;
-        case 'p':
-            putValue(argv[i], argv[i][2], &nextPosition);
-            printf("%s %d\n", nextPosition->key, nextPosition->value);
-            nextPosition += sizeof(DictPair);
-            break;
-        
-        default:
-            break;
-        }
-    }
+  }
 }
-
