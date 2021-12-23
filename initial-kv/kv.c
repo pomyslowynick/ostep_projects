@@ -47,6 +47,7 @@ char *strsep(char *stringp, const char *delim, int delimNum) {
 
 int deleteValue(int key, char *map[]) {
   if (map[key] != NULL) {
+    free(map[key]);
     map[key] = NULL;
   } else {
     printf("Key not found");
@@ -67,6 +68,17 @@ int putValue(int key, char *value, char *map[]) {
   map[key] = malloc(strlen(value) + 1);
   strcpy_s(map[key], strlen(value) + 1, value);
   map[strlen(value) - 1] = 0;
+  return 0;
+}
+
+int clearValues(char *map[], size_t allocated_elements) {
+  for (size_t i = 0; (i < 64000 - 1) && allocated_elements != 0; i++) {
+    if (map[i] != NULL) {
+      free(map[i]);
+      map[i] = NULL;
+      allocated_elements--;
+    }
+  }
   return 0;
 }
 
@@ -105,6 +117,9 @@ int main(int argc, char *argv[]) {
         parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
         deleteValue(parsedKeyValue, map);
         arraySize--;
+        break;
+      case 'c':
+        clearValues(map, arraySize);
         break;
       default:
         printf("Unrecognized command has been issued.");
