@@ -1,14 +1,14 @@
-#include <stdlib.h>
+#include <assert.h>
 #include <intrin.h>
 #include <malloc.h>
-#include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <windows.h>
 
-// all the strlen calls should be replaced with safer strlen_s, couldn't find the header file with in on Windows with Mingw-w64
-typedef struct DictPair
-{
+// all the strlen calls should be replaced with safer strlen_s, couldn't find
+// the header file with in on Windows with Mingw-w64
+typedef struct DictPair {
   char *value;
 } DictPair;
 
@@ -22,24 +22,20 @@ typedef struct DictPair
 //   return hash;
 // }
 
-char *strsep(char *stringp, const char *delim, int delimNum)
-{
+char *strsep(char *stringp, const char *delim, int delimNum) {
   assert(delimNum > 0);
   int offset = 0;
   char *delimiterPointer = (stringp != NULL) ? strpbrk(stringp, delim) : NULL;
 
-  if (delimiterPointer == NULL)
-  {
-    return NULL;
+  if (delimiterPointer == NULL) {
+    return stringp;
   }
 
-  for (int i = 1; i != delimNum; i++)
-  {
+  for (int i = 1; i != delimNum; i++) {
     offset = delimiterPointer - stringp + 1;
     delimiterPointer = strpbrk(delimiterPointer + 1, delim);
   }
-  if (delimiterPointer == NULL)
-  {
+  if (delimiterPointer == NULL) {
     delimiterPointer = stringp + strlen(stringp);
   }
 
@@ -49,53 +45,71 @@ char *strsep(char *stringp, const char *delim, int delimNum)
   return result;
 }
 
-int getValue(char* key, char** map)
-{
-  printf("%s\n", key);
-
+int deleteValue(int key, char *map[]) {
+  if (map[key] != NULL) {
+    map[key] = NULL;
+  } else {
+    printf("Key not found");
+  }
   return 0;
 }
 
-int putValue(int key, char* value, char* (*map)[1000])
-{
-  (*map)[key] = malloc(strlen(value) + 1);
-  strcpy_s((*map)[key], strlen(value)+1, value);
-  (*map)[sizeof((*map)[key]) - 1] = 0;
-  printf("Inside put value %d %s\n", key, (*map)[key]);
+int getValue(int key, char *map[]) {
+  if (map[key] != NULL) {
+    printf("%d, %s\n", key, map[key]);
+  } else {
+    printf("Key not found");
+  }
   return 0;
 }
 
-int main(int argc, char* argv[])
-{
-  if (argc < 2)
-  {
-    printf("Possible options are:\
-                      \n\t 'g arg' - get value for key arg\
-                      \n\t 'p key:value' - put key value pair into database \n");
+int putValue(int key, char *value, char *map[]) {
+  map[key] = malloc(strlen(value) + 1);
+  strcpy_s(map[key], strlen(value) + 1, value);
+  map[strlen(value) - 1] = 0;
+  return 0;
+}
+
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    printf(
+        "Possible options are:\
+                      \n\t 'g,key' - get value for key arg\
+                      \n\t 'p,key,value' - put key value pair into the database \n");
   }
 
-  char* map[1000];
+  char *map[64000] = {NULL};
   size_t arraySize = 0;
-  for (int i = 1; i < argc; i++)
-  {
+  for (int i = 1; i < argc; i++) {
     char *command = strsep(argv[i], ",", 1);
-    switch (*command)
-    {
-    case 'g':
-      getValue(strsep(argv[i], ",", 2), map);
-      break;
-    case 'p':
-      putValue(atoi(strsep(argv[i], ",", 2)), strsep(argv[i], ",", 3), &map);
-      arraySize++;
-      break;
+    char *end;
+    int parsedKeyValue;
 
-    default:
-      printf("Unrecognized command has been issued.");
-      break;
+    switch (*command) {
+      case 'g':
+        parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
+        getValue(parsedKeyValue, map);
+        break;
+      case 'p':
+        // replaced atoi with strtol - safer function
+        parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
+        putValue(parsedKeyValue, strsep(argv[i], ",", 3), map);
+        arraySize++;
+        break;
+      case 'a':
+        for (size_t i = 0; i < arraySize; i++) {
+          printf("Key: %lld, Value: %s\n", i, map[i]);
+        }
+        break;
+      case 'd':
+        parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
+        deleteValue(parsedKeyValue, map);
+        arraySize--;
+        break;
+      default:
+        printf("Unrecognized command has been issued.");
+        break;
     }
-  }
-  for (size_t i = 0; i < arraySize; i++) {
-    printf("Key: %lld, Value: %s\n", i, map[i]);
   }
   return 0;
 }
