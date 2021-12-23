@@ -6,11 +6,9 @@
 #include <string.h>
 #include <windows.h>
 
+#define BUFFER_SIZE 64000
 // all the strlen calls should be replaced with safer strlen_s, couldn't find
 // the header file with in on Windows with Mingw-w64
-typedef struct DictPair {
-  char *value;
-} DictPair;
 
 // unsigned long hash(unsigned char *str) {
 //   unsigned long hash = 5381;
@@ -22,6 +20,7 @@ typedef struct DictPair {
 //   return hash;
 // }
 
+// helper functions
 char *strsep(char *stringp, const char *delim, int delimNum) {
   assert(delimNum > 0);
   int offset = 0;
@@ -45,12 +44,21 @@ char *strsep(char *stringp, const char *delim, int delimNum) {
   return result;
 }
 
+int getIntegerLength(unsigned x) {
+    if (x >= 10000)      return 5;
+    if (x >= 1000)       return 4;
+    if (x >= 100)        return 3;
+    if (x >= 10)         return 2;
+    return 1;
+}
+
+// User level functions
 int deleteValue(int key, char *map[]) {
   if (map[key] != NULL) {
     free(map[key]);
     map[key] = NULL;
   } else {
-    printf("Key not found");
+    printf("Key not found\n");
   }
   return 0;
 }
@@ -59,7 +67,7 @@ int getValue(int key, char *map[]) {
   if (map[key] != NULL) {
     printf("%d, %s\n", key, map[key]);
   } else {
-    printf("Key not found");
+    printf("Key not found\n");
   }
   return 0;
 }
@@ -71,14 +79,42 @@ int putValue(int key, char *value, char *map[]) {
   return 0;
 }
 
+int printAll(char *map[], size_t allocated_elements) {
+  for (size_t i = 0; (i < BUFFER_SIZE - 1) && allocated_elements != 0; i++) {
+    if (map[i] != NULL) {
+      printf("%lld, %s\n", i, map[i]);
+      allocated_elements--;
+    }
+  }
+  return 0;
+}
 int clearValues(char *map[], size_t allocated_elements) {
-  for (size_t i = 0; (i < 64000 - 1) && allocated_elements != 0; i++) {
+  for (size_t i = 0; (i < BUFFER_SIZE - 1) && allocated_elements != 0; i++) {
     if (map[i] != NULL) {
       free(map[i]);
       map[i] = NULL;
       allocated_elements--;
     }
   }
+  return 0;
+}
+
+int saveMapToFile(char *map[], size_t allocated_elements) {
+  FILE *fd = fopen("database.txt", "a");
+  if (!fd) {
+    return EXIT_FAILURE;
+  }
+
+  for (size_t i = 0; (i < BUFFER_SIZE - 1) && allocated_elements != 0; i++) {
+    if (map[i] != NULL) {
+      char formattedSaveString[100];
+      size_t bufferSize = 100 < strlen(map[i]) ? 100 : strlen(map[i]) + 5 + getIntegerLength(i);
+      snprintf(formattedSaveString, bufferSize, "%lld, %s\n", i, map[i]);
+      fprintf_s(fd, formattedSaveString);
+    }
+  }
+  fclose(fd);
+
   return 0;
 }
 
@@ -90,7 +126,7 @@ int main(int argc, char *argv[]) {
                       \n\t 'p,key,value' - put key value pair into the database \n");
   }
 
-  char *map[64000] = {NULL};
+  char *map[BUFFER_SIZE] = {NULL};
   size_t arraySize = 0;
   for (int i = 1; i < argc; i++) {
     char *command = strsep(argv[i], ",", 1);
@@ -108,23 +144,25 @@ int main(int argc, char *argv[]) {
         putValue(parsedKeyValue, strsep(argv[i], ",", 3), map);
         arraySize++;
         break;
-      case 'a':
-        for (size_t i = 0; i < arraySize; i++) {
-          printf("Key: %lld, Value: %s\n", i, map[i]);
-        }
-        break;
       case 'd':
         parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
         deleteValue(parsedKeyValue, map);
         arraySize--;
         break;
+      case 'a':
+        printAll(map, arraySize);
+        break;
       case 'c':
         clearValues(map, arraySize);
         break;
       default:
-        printf("Unrecognized command has been issued.");
+        printf("Unrecognized command has been issued.\n");
         break;
     }
   }
+
+  saveMapToFile(map, arraySize);
+  clearValues(map, arraySize);
+
   return 0;
 }
