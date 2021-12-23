@@ -6,6 +6,7 @@
 #include <string.h>
 #include <assert.h>
 
+// all the strlen calls should be replaced with safer strlen_s, couldn't find the header file with in on Windows with Mingw-w64
 typedef struct DictPair
 {
   char *value;
@@ -45,26 +46,26 @@ char *strsep(char *stringp, const char *delim, int delimNum)
   char *result = (char *)malloc(delimiterPointer - stringp - offset);
   strncpy(result, stringp + offset, delimiterPointer - stringp - offset);
   result[delimiterPointer - stringp - offset] = '\0';
-  printf("The returned command: %s\n", result);
   return result;
 }
 
-int getValue(char* key, char* map)
+int getValue(char* key, char** map)
 {
   printf("%s\n", key);
 
   return 0;
 }
 
-int putValue(int key, char* value, char map[])
+int putValue(int key, char* value, char* (*map)[1000])
 {
-  map[key] = (char *)malloc(sizeof value);
-  // strncpy(map[key], value, sizeof(value));
-  // printf("Inside put value %d %s\n", key, map[key]);
+  (*map)[key] = malloc(strlen(value) + 1);
+  strcpy_s((*map)[key], strlen(value)+1, value);
+  (*map)[sizeof((*map)[key]) - 1] = 0;
+  printf("Inside put value %d %s\n", key, (*map)[key]);
   return 0;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
   if (argc < 2)
   {
@@ -73,8 +74,8 @@ int main(int argc, char *argv[])
                       \n\t 'p key:value' - put key value pair into database \n");
   }
 
-  char* map[65536];
-
+  char* map[1000];
+  size_t arraySize = 0;
   for (int i = 1; i < argc; i++)
   {
     char *command = strsep(argv[i], ",", 1);
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
       break;
     case 'p':
       putValue(atoi(strsep(argv[i], ",", 2)), strsep(argv[i], ",", 3), &map);
-      // printf("The created struct: %d %s\n", (&map)[atoi(strsep(argv[i], ",", 2))]->key, (&map)[atoi(strsep(argv[i], ",", 2))]->value);
+      arraySize++;
       break;
 
     default:
@@ -93,4 +94,8 @@ int main(int argc, char *argv[])
       break;
     }
   }
+  for (size_t i = 0; i < arraySize; i++) {
+    printf("Key: %lld, Value: %s\n", i, map[i]);
+  }
+  return 0;
 }

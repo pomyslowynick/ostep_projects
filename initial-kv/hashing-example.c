@@ -3,11 +3,10 @@
 #include <time.h>
 #include <stdint.h>
 
-#define M_VAL 4
-#define X_VAL 10
+#define M_VAL 7
+#define X_VAL 1000000
 
 uint32_t hashf_division(uint32_t x, uint32_t M) {
-    printf("%d\n", x % M);
     return x % M;
 };
 
@@ -23,9 +22,7 @@ int main(int argc, char* argv[]){
     
     for(i = 0; i < X_VAL; i++) {
         uint32_t random_val = rand();
-        printf("%d\n", random_val);
-        hash = hashf_division(random_val, M_VAL);
-        printf("Hash is: %d", hash);
+        hash = hashf_division(random_val&-2, M_VAL);
         buckets[hash]++;
     }
 
