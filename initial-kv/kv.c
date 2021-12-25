@@ -23,7 +23,7 @@
 // helper functions
 int saveMapToFile(char *map[], size_t allocated_elements);
 
-char *strsep(char *stringp, const char *delim, int delimNum) {
+char *key_strsep(char *stringp, const char *delim, int delimNum) {
   assert(delimNum > 0);
   int offset = 0;
   char *delimiterPointer = (stringp != NULL) ? strpbrk(stringp, delim) : NULL;
@@ -145,9 +145,9 @@ size_t readDatabaseFile(char *map[]) {
 
   if (fd != NULL) {
     while (fgets(line, sizeof line, fd) != NULL) {
-      char *formattedLine = (strsep(line, ",", 2) + 1);
+      char *formattedLine = (key_strsep(line, ",", 2) + 1);
       formattedLine[strcspn(formattedLine, "\n")] = 0;
-      map[strtol(strsep(line, ",", 1), &end, 10)] = formattedLine;
+      map[strtol(key_strsep(line, ",", 1), &end, 10)] = formattedLine;
       addedLines += 1;
     }
   } else {
@@ -172,23 +172,23 @@ int main(int argc, char *argv[]) {
   size_t numAddedFromFile = readDatabaseFile(map);
   size_t arraySize = numAddedFromFile;
   for (int i = 1; i < argc; i++) {
-    char *command = strsep(argv[i], ",", 1);
+    char *command = key_strsep(argv[i], ",", 1);
     char *end;
     int parsedKeyValue;
 
     switch (*command) {
       case 'g':
-        parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
+        parsedKeyValue = strtol(key_strsep(argv[i], ",", 2), &end, 10);
         getValue(parsedKeyValue, map);
         break;
       case 'p':
         // replaced atoi with strtol - safer function
-        parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
-        putValue(parsedKeyValue, strsep(argv[i], ",", 3), map);
+        parsedKeyValue = strtol(key_strsep(argv[i], ",", 2), &end, 10);
+        putValue(parsedKeyValue, key_strsep(argv[i], ",", 3), map);
         arraySize += 1;
         break;
       case 'd':
-        parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
+        parsedKeyValue = strtol(key_strsep(argv[i], ",", 2), &end, 10);
         deleteValue(parsedKeyValue, map);
         arraySize--;
         break;
