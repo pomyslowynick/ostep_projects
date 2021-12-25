@@ -21,6 +21,8 @@
 // }
 
 // helper functions
+int saveMapToFile(char *map[], size_t allocated_elements);
+
 char *strsep(char *stringp, const char *delim, int delimNum) {
   assert(delimNum > 0);
   int offset = 0;
@@ -45,11 +47,11 @@ char *strsep(char *stringp, const char *delim, int delimNum) {
 }
 
 int getIntegerLength(unsigned x) {
-    if (x >= 10000)      return 5;
-    if (x >= 1000)       return 4;
-    if (x >= 100)        return 3;
-    if (x >= 10)         return 2;
-    return 1;
+  if (x >= 10000) return 5;
+  if (x >= 1000) return 4;
+  if (x >= 100) return 3;
+  if (x >= 10) return 2;
+  return 1;
 }
 
 // User level functions
@@ -75,7 +77,7 @@ int getValue(int key, char *map[]) {
 int putValue(int key, char *value, char *map[]) {
   map[key] = malloc(strlen(value) + 1);
   strcpy_s(map[key], strlen(value) + 1, value);
-  map[strlen(value) - 1] = 0;
+  map[key][strlen(value)] = 0;
   return 0;
 }
 
@@ -88,6 +90,17 @@ int printAll(char *map[], size_t allocated_elements) {
   }
   return 0;
 }
+
+int clearDatabaseFile() {
+  int returned = remove("database.txt");
+
+  if (returned != 0) {
+    printf("Error");
+    return EXIT_FAILURE;
+  }
+  return 0;
+}
+
 int clearValues(char *map[], size_t allocated_elements) {
   for (size_t i = 0; (i < BUFFER_SIZE - 1) && allocated_elements != 0; i++) {
     if (map[i] != NULL) {
@@ -96,8 +109,12 @@ int clearValues(char *map[], size_t allocated_elements) {
       allocated_elements--;
     }
   }
+  if (clearDatabaseFile() != 0) {
+    printf("Error removing the file");
+  }
   return 0;
 }
+
 
 int saveMapToFile(char *map[], size_t allocated_elements) {
   FILE *fd = fopen("database.txt", "a");
@@ -108,14 +125,39 @@ int saveMapToFile(char *map[], size_t allocated_elements) {
   for (size_t i = 0; (i < BUFFER_SIZE - 1) && allocated_elements != 0; i++) {
     if (map[i] != NULL) {
       char formattedSaveString[100];
-      size_t bufferSize = 100 < strlen(map[i]) ? 100 : strlen(map[i]) + 5 + getIntegerLength(i);
+      size_t stringLen = strlen(map[i]);
+      size_t bufferSize =
+          100 < stringLen ? 100 : stringLen + 5 + getIntegerLength(i);
       snprintf(formattedSaveString, bufferSize, "%lld, %s\n", i, map[i]);
       fprintf_s(fd, formattedSaveString);
     }
   }
   fclose(fd);
-
+  fd = NULL;
   return 0;
+}
+
+size_t readDatabaseFile(char *map[]) {
+  FILE *fd = fopen("database.txt", "r");
+  char line[1000];
+  char *end;
+  size_t addedLines = 0;
+
+  if (fd != NULL) {
+    while (fgets(line, sizeof line, fd) != NULL) {
+      char *formattedLine = (strsep(line, ",", 2) + 1);
+      formattedLine[strcspn(formattedLine, "\n")] = 0;
+      map[strtol(strsep(line, ",", 1), &end, 10)] = formattedLine;
+      addedLines += 1;
+    }
+  } else {
+    return EXIT_FAILURE;
+  }
+
+  fclose(fd);
+  fd = NULL;
+
+  return addedLines;
 }
 
 int main(int argc, char *argv[]) {
@@ -127,7 +169,8 @@ int main(int argc, char *argv[]) {
   }
 
   char *map[BUFFER_SIZE] = {NULL};
-  size_t arraySize = 0;
+  size_t numAddedFromFile = readDatabaseFile(map);
+  size_t arraySize = numAddedFromFile;
   for (int i = 1; i < argc; i++) {
     char *command = strsep(argv[i], ",", 1);
     char *end;
@@ -142,7 +185,7 @@ int main(int argc, char *argv[]) {
         // replaced atoi with strtol - safer function
         parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
         putValue(parsedKeyValue, strsep(argv[i], ",", 3), map);
-        arraySize++;
+        arraySize += 1;
         break;
       case 'd':
         parsedKeyValue = strtol(strsep(argv[i], ",", 2), &end, 10);
@@ -156,13 +199,12 @@ int main(int argc, char *argv[]) {
         clearValues(map, arraySize);
         break;
       default:
-        printf("Unrecognized command has been issued.\n");
+        printf("bad command\n");
         break;
     }
   }
 
   saveMapToFile(map, arraySize);
-  clearValues(map, arraySize);
 
   return 0;
 }
