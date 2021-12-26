@@ -76,7 +76,7 @@ int getValue(int key, char *map[]) {
 
 int putValue(int key, char *value, char *map[]) {
   map[key] = malloc(strlen(value) + 1);
-  strcpy_s(map[key], strlen(value) + 1, value);
+  strncpy(map[key], value, strlen(value) + 1);
   map[key][strlen(value)] = 0;
   return 0;
 }
@@ -129,7 +129,7 @@ int saveMapToFile(char *map[], size_t allocated_elements) {
       size_t bufferSize =
           100 < stringLen ? 100 : stringLen + 5 + getIntegerLength(i);
       snprintf(formattedSaveString, bufferSize, "%zd, %s\n", i, map[i]);
-      fprintf_s(fd, formattedSaveString);
+      fprintf(fd, formattedSaveString);
     }
   }
   fclose(fd);
