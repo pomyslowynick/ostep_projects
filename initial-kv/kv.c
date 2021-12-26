@@ -84,7 +84,7 @@ int putValue(int key, char *value, char *map[]) {
 int printAll(char *map[], size_t allocated_elements) {
   for (size_t i = 0; (i < BUFFER_SIZE - 1) && allocated_elements != 0; i++) {
     if (map[i] != NULL) {
-      printf("%lld, %s\n", i, map[i]);
+      printf("%zd, %s\n", i, map[i]);
       allocated_elements--;
     }
   }
@@ -128,7 +128,7 @@ int saveMapToFile(char *map[], size_t allocated_elements) {
       size_t stringLen = strlen(map[i]);
       size_t bufferSize =
           100 < stringLen ? 100 : stringLen + 5 + getIntegerLength(i);
-      snprintf(formattedSaveString, bufferSize, "%lld, %s\n", i, map[i]);
+      snprintf(formattedSaveString, bufferSize, "%zd, %s\n", i, map[i]);
       fprintf_s(fd, formattedSaveString);
     }
   }
