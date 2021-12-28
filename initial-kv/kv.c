@@ -66,10 +66,10 @@ int deleteValue(int key, char *map[]) {
 }
 
 int getValue(int key, char *map[]) {
-  if (map[key] != NULL) {
+  if (key < BUFFER_SIZE && map[key] != NULL) {
     printf("%d, %s\n", key, map[key]);
   } else {
-    printf("Key not found\n");
+    printf("%d not found\n", key);
   }
   return 0;
 }
@@ -117,7 +117,7 @@ int clearValues(char *map[], size_t allocated_elements) {
 
 
 int saveMapToFile(char *map[], size_t allocated_elements) {
-  FILE *fd = fopen("database.txt", "a");
+  FILE *fd = fopen("database.txt", "w");
   if (!fd) {
     return EXIT_FAILURE;
   }
@@ -162,10 +162,11 @@ size_t readDatabaseFile(char *map[]) {
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    printf(
-        "Possible options are:\
-                      \n\t 'g,key' - get value for key arg\
-                      \n\t 'p,key,value' - put key value pair into the database \n");
+    // printf(
+    //     "Possible options are:\
+    //                   \n\t 'g,key' - get value for key arg\
+    //                   \n\t 'p,key,value' - put key value pair into the database \n");
+    exit(0);
   }
 
   char *map[BUFFER_SIZE] = {NULL};
