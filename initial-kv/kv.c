@@ -1,10 +1,8 @@
 #include <assert.h>
-#include <intrin.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
 
 #define BUFFER_SIZE 64000
 // all the strlen calls should be replaced with safer strlen_s, couldn't find
